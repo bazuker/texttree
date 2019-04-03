@@ -16,6 +16,6 @@ if err != nil {
 }
 fmt.Println(tt.Entities())
 fmt.Println(tt.GetString("a/hello"))
-fmt.Println(tt.GetString("b/hello.txt"))
-fmt.Println(tt.GetString("b/c/quack"))
+fmt.Println(tt.Get("b/hello.txt").Content)
+fmt.Println(tt.GetStringSub("b", "c/quack"))
 ```
