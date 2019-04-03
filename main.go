@@ -12,5 +12,6 @@ func main() {
 	}
 	fmt.Println(tt.Entities())
 	fmt.Println(tt.GetString("sample/a/hello"))
+	fmt.Println(tt.GetString("sample/b/hello.txt"))
 	fmt.Println(tt.GetString("sample/b/c/quack"))
 }
