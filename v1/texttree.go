@@ -10,7 +10,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"strings"
 )
 
 const DefaultMaxFileSize = 16 << 10 // 16 KB
@@ -21,35 +20,63 @@ type TextTree struct {
 }
 
 type Entity struct {
-	Content  string
-	Filename string
+	Content   string
+	Filename  string
+	Directory bool
 }
 
 // Creates a new text tree by loading all the files from a specified directory
 // that are smaller than maximum file size
-func NewTextTree(path string, maxFileSize int64) (*TextTree, error) {
+func NewTextTree(dirPath string, maxFileSize int64) (*TextTree, error) {
 	cache := make(map[string]*Entity)
-	// recursively walk through the path
-	err := filepath.Walk(path,
+	// remove last back slash
+	dirPathLen := len(dirPath)
+	if dirPath[dirPathLen-1] == '/' {
+		dirPathLen--
+		dirPath = dirPath[:dirPathLen]
+	}
+	// recursively walk through the dirPath
+	err := filepath.Walk(dirPath,
 		func(path string, info os.FileInfo, err error) error {
 			if err != nil {
 				return err
 			}
+			// skip the root directory
+			if len(path) <= dirPathLen {
+				return nil
+			}
+			shortPath := path[dirPathLen+1:]
+			// check if it is a directory
+			if info.IsDir() {
+				key := shortPath
+				if info.Name()[len(info.Name())-1] != '/' {
+					key += "/"
+				}
+				cache[key] = &Entity{
+					Content:   info.Name(),
+					Filename:  info.Name(),
+					Directory: true,
+				}
+				return nil
+			}
 			// check the file size
-			if !info.IsDir() && info.Size() < maxFileSize {
+			if info.Size() < maxFileSize {
 				data, err := ioutil.ReadFile(path)
 				if err != nil {
 					return err
 				}
-				newEntity := &Entity{Content: string(data), Filename: info.Name()}
-				dir, filename := filepath.Split(path)
-				shortPath := dir[len(strings.Split(dir, "/")[0])+1:]
-				key := shortPath + filename[0:len(filename)-len(filepath.Ext(filename))]
+				newEntity := &Entity{
+					Content:   string(data),
+					Filename:  info.Name(),
+					Directory: false,
+				}
+				dir, filename := filepath.Split(shortPath)
+				key := dir + filename[0:len(filename)-len(filepath.Ext(filename))]
 				if entity, ok := cache[key]; ok {
 					// if entity already exists, keep the key extension
 					delete(cache, key)
-					cache[shortPath+info.Name()] = newEntity
-					cache[shortPath+entity.Filename] = entity
+					cache[dir+info.Name()] = newEntity
+					cache[dir+entity.Filename] = entity
 				} else {
 					cache[key] = newEntity
 				}
@@ -62,7 +89,7 @@ func NewTextTree(path string, maxFileSize int64) (*TextTree, error) {
 	// create a text tree object with buffered data
 	return &TextTree{
 		cache:    cache,
-		basePath: path,
+		basePath: dirPath,
 	}, nil
 }
 
@@ -75,6 +102,12 @@ func (tt *TextTree) Entities() (entities []string) {
 		i++
 	}
 	return
+}
+
+// Verifies if subdirectory exists
+func (tt *TextTree) SubExists(sub string) bool {
+	_, exists := tt.cache[sub+"/"]
+	return exists
 }
 
 // Gets an entity with a sub path
@@ -110,15 +143,21 @@ func (tt *TextTree) GetString(path string) string {
 }
 
 // Gets an entity's content if it exists
-func (tt *TextTree) GetStringIfExists(path string) (string, bool) {
+func (tt *TextTree) GetStringIfExists(path string) (result string, ok bool) {
 	e, ok := tt.cache[path]
-	return e.Content, ok
+	if ok {
+		result = e.Content
+	}
+	return
 }
 
 // Gets an entity's content with a sub path if it exists
-func (tt *TextTree) GetStringSubIfExists(sub, path string) (string, bool) {
+func (tt *TextTree) GetStringSubIfExists(sub, path string) (result string, ok bool) {
 	e, ok := tt.cache[sub+"/"+path]
-	return e.Content, ok
+	if ok {
+		result = e.Content
+	}
+	return
 }
 
 // Gets the path of a loaded directory
