@@ -15,7 +15,7 @@ if err != nil {
 	panic(err)
 }
 fmt.Println(tt.Entities())
-fmt.Println(tt.GetString("sample/a/hello"))
-fmt.Println(tt.GetString("sample/b/hello.txt"))
-fmt.Println(tt.GetString("sample/b/c/quack"))
+fmt.Println(tt.GetString("a/hello"))
+fmt.Println(tt.GetString("b/hello.txt"))
+fmt.Println(tt.GetString("b/c/quack"))
 ```

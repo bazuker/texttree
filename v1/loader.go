@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 const DefaultMaxFileSize = 16 << 10 // 16 KB
@@ -42,12 +43,13 @@ func NewTextTree(path string, maxFileSize int64) (*TextTree, error) {
 				}
 				newEntity := &Entity{Content: string(data), Filename: info.Name()}
 				dir, filename := filepath.Split(path)
-				key := dir + filename[0:len(filename)-len(filepath.Ext(filename))]
+				shortPath := dir[len(strings.Split(dir, "/")[0])+1:]
+				key := shortPath + filename[0:len(filename)-len(filepath.Ext(filename))]
 				if entity, ok := cache[key]; ok {
 					// if entity already exists, keep the key extension
 					delete(cache, key)
-					cache[path] = newEntity
-					cache[dir+entity.Filename] = entity
+					cache[shortPath+info.Name()] = newEntity
+					cache[shortPath+entity.Filename] = entity
 				} else {
 					cache[key] = newEntity
 				}
@@ -75,29 +77,51 @@ func (tt *TextTree) Entities() (entities []string) {
 	return
 }
 
-// Returns an entity
+// Gets an entity with a sub path
+func (tt *TextTree) GetSub(sub, path string) *Entity {
+	return tt.cache[sub+"/"+path]
+}
+
+// Gets an entity
 func (tt *TextTree) Get(path string) *Entity {
 	return tt.cache[path]
 }
 
-// Returns an entity if it exists
+// Gets an entity if it exists
 func (tt *TextTree) GetIfExists(path string) (*Entity, bool) {
 	e, ok := tt.cache[path]
 	return e, ok
 }
 
-// Returns an entity's content
+// Gets an entity with a sub path if it exists
+func (tt *TextTree) GetSubIfExists(sub, path string) (*Entity, bool) {
+	e, ok := tt.cache[sub+"/"+path]
+	return e, ok
+}
+
+// Gets an entity's content with a sub path
+func (tt *TextTree) GetStringSub(sub, path string) string {
+	return tt.cache[sub+"/"+path].Content
+}
+
+// Gets an entity's content
 func (tt *TextTree) GetString(path string) string {
 	return tt.cache[path].Content
 }
 
-// Returns an entity's content if it exists
+// Gets an entity's content if it exists
 func (tt *TextTree) GetStringIfExists(path string) (string, bool) {
 	e, ok := tt.cache[path]
 	return e.Content, ok
 }
 
-// Returns the path of a loaded directory
+// Gets an entity's content with a sub path if it exists
+func (tt *TextTree) GetStringSubIfExists(sub, path string) (string, bool) {
+	e, ok := tt.cache[sub+"/"+path]
+	return e.Content, ok
+}
+
+// Gets the path of a loaded directory
 func (tt *TextTree) GetBasePath() string {
 	return tt.basePath
 }
