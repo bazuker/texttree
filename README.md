@@ -10,6 +10,10 @@ go get -u github.com/kisulken/texttree
 
 ## Example
 ```Go
+import "github.com/kisulken/texttree/v1"
+
+...
+
 tt, err := texttree.NewTextTree("sample", texttree.DefaultMaxFileSize)
 if err != nil {
 	panic(err)
