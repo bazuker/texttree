@@ -6,7 +6,7 @@ import (
 )
 
 func main() {
-	tt, err := texttree.NewTextTree("sample", texttree.DefaultMaxFileSize)
+	tt, err := texttree.NewTextTree("sample/", texttree.DefaultMaxFileSize)
 	if err != nil {
 		panic(err)
 	}
