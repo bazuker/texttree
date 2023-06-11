@@ -14,7 +14,7 @@ import "github.com/kisulken/texttree/v1"
 
 ...
 
-tt, err := texttree.NewTextTree("sample", texttree.DefaultMaxFileSize)
+tt, err := texttree.NewTextTree("sample", texttree.DefaultMaxFileSize) // buffers all the files here
 if err != nil {
 	panic(err)
 }
